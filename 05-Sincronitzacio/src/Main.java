@@ -1,41 +1,38 @@
 import java.util.Random;
 
-// Singleton per a la classe Compte
 class Compte {
     private static Compte instance;
     private float saldo = 0.0f;
 
     private Compte() {}
 
-    public static Compte getInstance() {
+    public static synchronized Compte getInstance() {
         if (instance == null) {
             instance = new Compte();
         }
         return instance;
     }
 
-    public void ingressar(float quantitat) {
+    public synchronized void ingressar(float quantitat) {
         saldo += quantitat;
     }
 
-    public void retirar(float quantitat) {
+    public synchronized void retirar(float quantitat) {
         if (saldo >= quantitat) {
             saldo -= quantitat;
         }
     }
 
-    public float getSaldo() {
+    public synchronized float getSaldo() {
         return saldo;
     }
 }
 
-// Classe Soci que realitza ingressos i retirades
 class Soci extends Thread {
-    private Compte compte;
+    private final Compte compte;
     private final float aportacio = 10f;
-    private final int esperaMax = 100;
     private final int maxAnys = 10;
-    private Random random = new Random();
+    private final Random random = new Random();
 
     public Soci(Compte compte) {
         this.compte = compte;
@@ -45,26 +42,24 @@ class Soci extends Thread {
     public void run() {
         for (int any = 0; any < maxAnys; any++) {
             for (int mes = 1; mes <= 12; mes++) {
-                if (mes % 2 == 0) {
+                synchronized (compte) {
                     compte.ingressar(aportacio);
-                } else {
                     compte.retirar(aportacio);
                 }
                 try {
-                    Thread.sleep(random.nextInt(esperaMax));
+                    Thread.sleep(random.nextInt(50));
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Thread.currentThread().interrupt();
                 }
             }
         }
     }
 }
 
-// Classe Associació que gestiona els socis
 class Associacio {
     private final int numSocis = 1000;
-    private Soci[] socis;
-    private Compte compte;
+    private final Soci[] socis;
+    private final Compte compte;
 
     public Associacio() {
         compte = Compte.getInstance();
@@ -85,13 +80,9 @@ class Associacio {
             try {
                 soci.join();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
         }
-    }
-
-    public void mostraBalancComptes() {
-        System.out.printf("Saldo: %.2f\n", compte.getSaldo());
     }
 }
 
@@ -100,6 +91,5 @@ public class Main {
         Associacio associacio = new Associacio();
         associacio.iniciaCompteTempsSocis();
         associacio.esperaPeriodeSocis();
-        associacio.mostraBalancComptes();
     }
 }
