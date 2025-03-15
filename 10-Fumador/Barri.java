@@ -1,21 +1,21 @@
 public class Barri {
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
         Estanc estanc = new Estanc();
-        Thread estancThread = new Thread(estanc::executar);
-        estancThread.start();
+        Fumador[] fumadors = {new Fumador(estanc, 0), new Fumador(estanc, 1), new Fumador(estanc, 2)};
 
-        Fumador[] fumadors = new Fumador[3];
-        Thread[] threads = new Thread[3];
+        System.out.println("Estanc obert");
+        estanc.start();
 
-        for (int i = 0; i < 3; i++) {
-            fumadors[i] = new Fumador(estanc, i);
-            threads[i] = new Thread(fumadors[i]);
-            threads[i].start();
+        for (Fumador f : fumadors) f.start();
+
+        for (Fumador f : fumadors) {
+            try {
+                f.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
 
-        for (Thread thread : threads) {
-            thread.join();
-        }
         estanc.tancarEstanc();
     }
 }
