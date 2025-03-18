@@ -10,27 +10,28 @@ class Barber implements Runnable {
     @Override
     public void run() {
         while (true) {
-            Client client = barberia.seguentClient();
-            if (client == null) {
-                System.out.println("Ningú en espera");
-                System.out.println("Barber " + name + " potser dormint...");
-                if (Math.random() > 0.5) { 
-                    synchronized (barberia.condBarber) {
-                        try {
-                            barberia.condBarber.wait();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
+            Client client;
+            synchronized (barberia) {
+                client = barberia.seguentClient();
+                if (client == null) {
+                    System.out.println("Ningú en espera");
+                    System.out.println("Barber " + name + " dormint");
+                    try {
+                        synchronized (barberia.condBarber) {
+                            barberia.condBarber.wait(); 
                         }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
+                    continue;
                 }
-            } else {
-                System.out.println("Li toca al client " + client.getNom());
-                client.tallarseElCabell();
-                try {
-                    Thread.sleep(700 + (int)(Math.random() * 50));
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            }
+            System.out.println("Li toca al client " + client.getNom());
+            client.tallarseElCabell();
+            try {
+                Thread.sleep(900 + (int) (Math.random() * 100));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
